@@ -30,7 +30,7 @@ Review and edit:
 - `projects/<slug>/prompts.md`
 - `projects/<slug>/publishing_pack.md`
 
-Generate storyboard stills only after approving usage:
+Generate storyboard stills only after approving usage. These images become opening-frame references for Veo scenes:
 ```bash
 musa-video images projects/<slug> --generate
 ```
@@ -45,7 +45,8 @@ Create narration after replacing the storyboard narration placeholders:
 musa-video narrate projects/<slug> --voice en-US-GuyNeural
 musa-video captions projects/<slug>
 musa-video music projects/<slug> --duration 40
-musa-video assemble projects/<slug>
+musa-video assemble projects/<slug> --platform shorts
+musa-video assemble projects/<slug> --platform youtube
 ```
 
 For higher-quality original music, install `pip install -e '.[cloud]'`, configure Google Cloud Application Default Credentials and `GOOGLE_CLOUD_PROJECT`, then run `musa-video music-ai projects/<slug> --generate`. This uses Vertex AI Lyria 002 to generate an original 30-second instrumental WAV; it is a paid cloud request (Google currently documents $0.06 per 30-second output). The simple `musa-video music` command remains a no-cloud synthetic ambient fallback. Always listen and review the generated track before publishing.
