@@ -8,6 +8,7 @@ from .veo import generate_project
 from .images import generate_story_images
 from .captions import create_captions
 from .audio import make_original_ambient_bed
+from .music_ai import generate_lyria_track
 from .assemble import assemble
 
 load_dotenv()
@@ -39,6 +40,12 @@ def captions(project_dir: Path):
 def music(project_dir: Path, duration: int = typer.Option(40, min=5, max=300)):
     target = project_dir / "assets" / "music_bed.mp3"
     print(f"[green]Original ambient bed saved:[/green] {make_original_ambient_bed(target, duration)}")
+
+
+@app.command("music-ai")
+def music_ai(project_dir: Path, prompt: str = typer.Option("Cinematic, modern instrumental score for a short-form explainer: energetic opening, curious tension, uplifting payoff, polished electronic textures and orchestral accents; no vocals.", help="Describe the original soundtrack"), generate: bool = typer.Option(False, "--generate", help="Explicitly request paid Lyria generation.")):
+    target = project_dir / "assets" / "music_bed.wav"
+    generate_lyria_track(target, prompt, confirmed=generate)
 
 @app.command("assemble")
 def assemble_command(project_dir: Path):
