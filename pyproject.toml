@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "musa-ai-video-factory"
+version = "0.1.0"
+description = "Vertical AI explainer video pipeline using Google Veo and FFmpeg"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["typer>=0.12", "rich>=13.7", "python-dotenv>=1.0", "google-genai>=1.0", "pydantic>=2.7"]
+
+[project.optional-dependencies]
+tts = ["edge-tts>=6.1"]
+dev = ["pytest>=8.2", "ruff>=0.5"]
+
+[project.scripts]
+musa-video = "musa_video.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
