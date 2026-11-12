@@ -3,11 +3,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from rich import print
 from .project import create_project
+from .script import write_script
 from .veo import generate_project
-from .assemble import assemble
 from .images import generate_story_images
 from .captions import create_captions
 from .audio import make_original_ambient_bed
+from .assemble import assemble
 
 load_dotenv()
 app = typer.Typer(no_args_is_help=True, help="Create vertical AI explainer videos.")
@@ -17,6 +18,10 @@ def new(topic: str = typer.Option(..., help="Video topic"), language: str = type
     path = create_project(topic, language, scenes)
     print(f"[green]Project created:[/green] {path}")
     print(f"Review prompts: {path / 'prompts.md'}")
+
+@app.command()
+def write(project_dir: Path, generate: bool = typer.Option(False, "--generate", help="Explicitly request AI scriptwriting; usage may be billed.")):
+    write_script(project_dir, confirmed=generate)
 
 @app.command()
 def generate(project_dir: Path, generate: bool = typer.Option(False, "--generate", help="Explicitly submit Veo requests; usage may be billed.")):
@@ -45,6 +50,7 @@ def doctor():
     print(f"Google API key: {'configured' if os.getenv('GOOGLE_API_KEY') else 'not configured (fine for dry runs)'}")
     print(f"Veo model: {os.getenv('VEO_MODEL', 'veo-3.1-generate-preview')}")
     print(f"Image model: {os.getenv('IMAGE_MODEL', 'gemini-3.1-flash-image')}")
+    print(f"Script model: {os.getenv('SCRIPT_MODEL', 'gemini-3.1-flash-lite')}")
 
 @app.command()
 def narrate(project_dir: Path, text: str = typer.Option(""), voice: str = typer.Option("en-US-GuyNeural")):
