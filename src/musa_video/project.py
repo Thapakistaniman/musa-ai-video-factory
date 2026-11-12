@@ -20,7 +20,7 @@ def create_project(topic: str, language: str = "en", scenes: int = 5) -> Path:
         (root / name).mkdir(parents=True, exist_ok=True)
     brief = {
         "topic": topic, "language": language,
-        "style": "premium cinematic stylized 3D explainer, physically based materials, expressive lighting, volumetric atmosphere, detailed environments",
+        "style": "premium cinematic photorealistic 3D CGI explainer, physically based materials, lifelike textures, realistic anatomy and proportions, expressive cinematic lighting, volumetric atmosphere, detailed environments, high-end feature-film render quality",
         "aspect_ratio": "9:16", "scene_count": scenes,
         "audience": "general social video audience", "target_duration_seconds": scenes * 8,
     }
