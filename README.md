@@ -1,63 +1,43 @@
 # Musa AI Video Factory
 
-A modular production pipeline for TikTok, Instagram Reels, YouTube Shorts and landscape YouTube videos. The target is polished, story-led video: real generated motion, distinct scenes, coherent characters/subjects, narration, music, subtitles, sound design, thumbnails and platform-specific publishing copy.
+A free-first production pipeline for TikTok, Instagram Reels, YouTube Shorts and landscape YouTube.
 
-**Video provider:** Google Veo 3.1. **Image provider:** Gemini image generation. **Editing:** FFmpeg. No Runway or Higgsfield.
+## Free mode (default and safe)
+The GitHub Actions workflow **Musa Video Factory — FREE** uses no Google API key, no paid generation API, no paid cloud GPU and no billing secrets. It creates a project, fills an editable narration scaffold, renders distinct animated motion-graphic scenes with FFmpeg, generates voice-over with Edge TTS, creates SRT captions, synthesizes an original ambient audio bed, assembles the selected aspect ratio and saves all project files as a downloadable Actions artifact.
 
-## What is implemented
-- Topic project generator with five narrative beats and a scene-by-scene storyboard.
-- Character/subject bible and continuity instructions to reduce visual drift.
-- Opt-in vertical AI storyboard-image generation (one distinct image per scene).
-- Opt-in Veo clip generation; dry-run is the default.
-- Optional TTS narration (Edge TTS), SRT caption generation and original synthesized ambient audio bed.
-- FFmpeg assembly with burned-in captions and voice/music mix.
-- Manual GitHub Actions cloud workflow and downloadable project artifact.
-- Editorial quality checklist and platform publishing-pack template.
+**Important quality distinction:** this default free cloud workflow creates animated motion graphics, not photorealistic AI-generated 3D footage. It is deliberately transparent rather than pretending that still images are real AI video. Voice generation uses the Edge TTS service and therefore requires network access; it does not use a paid API key, but service availability and terms are controlled by Microsoft.
 
-## Quick start
+## Run from iPhone
+1. Open this repository on GitHub.
+2. Go to **Actions**.
+3. Select **Musa Video Factory — FREE**.
+4. Tap **Run workflow**, enter topic, language, scene count and platform.
+5. Wait for the workflow to finish.
+6. Open the run's **Artifacts** section and download the ZIP containing the MP4 and editable project.
+
+No secrets or payment setup are needed for the free workflow.
+
+## Local AI video mode (free model, your own GPU)
+For real generated video motion, use ComfyUI with open-weight Wan 2.2. The official ComfyUI documentation says the Wan 2.2 TI2V 5B workflow can fit on 8 GB VRAM with native offloading, though speed and usable resolution depend on the GPU, system RAM and settings. The 14B models need substantially more resources. See the [official ComfyUI Wan 2.2 guide](https://docs.comfy.org/tutorials/video/wan/wan2_2) and [Wan 2.2 model card](https://huggingface.co/Comfy-Org/Wan-2.2). Model license is Apache 2.0 per the model documentation. Model weights are large and must be downloaded locally. No paid generation API is required, but electricity and hardware are not literally free.
+
+The next integration step is to connect this project to a local ComfyUI worker. The correct model/workflow depends on the exact GPU and VRAM in the user's PC. GitHub-hosted Actions runners cannot use the user's local GPU automatically.
+
+## Local quick start
 Python 3.11+ and FFmpeg required.
 
 ```bash
 pip install -e '.[tts]'
-cp .env.example .env
-musa-video doctor
 musa-video new --topic "How does a black hole work?" --language en --scenes 5
+musa-video free-script projects/how-does-a-black-hole-work
+musa-video free-render projects/how-does-a-black-hole-work
+musa-video narrate projects/how-does-a-black-hole-work
+musa-video captions projects/how-does-a-black-hole-work
+musa-video music projects/how-does-a-black-hole-work --duration 40
+musa-video assemble projects/how-does-a-black-hole-work --platform shorts
 ```
 
-Review and edit:
-- `projects/<slug>/character_bible.md`
-- `projects/<slug>/storyboard.json`
-- `projects/<slug>/prompts.md`
-- `projects/<slug>/publishing_pack.md`
+## Paid providers
+Google Gemini image/script generation, Veo video generation and Vertex Lyria are not part of the free workflow. Their commands remain separate, opt-in developer features and are never called by the free Actions workflow. Do not enable them unless you intentionally choose a paid provider and verify current pricing.
 
-Generate storyboard stills only after approving usage. These images become opening-frame references for Veo scenes:
-```bash
-musa-video images projects/<slug> --generate
-```
-
-Generate moving Veo clips only after checking model access and cost:
-```bash
-musa-video generate projects/<slug> --generate
-```
-
-Create narration after replacing the storyboard narration placeholders:
-```bash
-musa-video narrate projects/<slug> --voice en-US-GuyNeural
-musa-video captions projects/<slug>
-musa-video music projects/<slug> --duration 40
-musa-video assemble projects/<slug> --platform shorts
-musa-video assemble projects/<slug> --platform youtube
-```
-
-For higher-quality original music, install `pip install -e '.[cloud]'`, configure Google Cloud Application Default Credentials and `GOOGLE_CLOUD_PROJECT`, then run `musa-video music-ai projects/<slug> --generate`. This uses Vertex AI Lyria 002 to generate an original 30-second instrumental WAV; it is a paid cloud request (Google currently documents $0.06 per 30-second output). The simple `musa-video music` command remains a no-cloud synthetic ambient fallback. Always listen and review the generated track before publishing.
-
-## iPhone / cloud
-Open repository → Actions → **Musa Video Factory (manual)** → Run workflow. Choose narration language (Dutch or English), scene count, output platform (TikTok, Reels, Shorts or landscape YouTube), and the generation checkboxes. Paid generation additionally requires the explicit cost-approval checkbox. A preflight estimate is checked against the selected USD budget guardrail before any paid request. The guardrail is an estimate-based workflow check, not a provider-enforced billing cap. The workflow creates the storyboard, optionally generates images, Veo clips and Lyria music, assembles the selected MP4 format, and uploads the complete project as an artifact. Add `GOOGLE_API_KEY` under Settings → Secrets and variables → Actions. For the optional Lyria AI music checkbox, also add `GCP_SERVICE_ACCOUNT` (the service-account JSON key) and `GOOGLE_CLOUD_PROJECT`; the service account needs Vertex AI permissions and the Vertex AI API enabled. Never paste API keys or service-account JSON into chat or source code.
-
-## Billing and provider limits
-Image and video generation can incur charges. Dry-run is the default and every paid generation path requires an explicit `--generate` flag or workflow checkbox. As a planning example from Google's published rates: Veo 3.1 Standard is listed at $0.40/second for 720p/1080p, so five 8-second scenes are approximately $16 for video alone; Fast is listed at $0.10/second (approximately $4 for 40 seconds). Gemini 3.1 Flash Image is listed at about $0.067 per 1K image, so five storyboard images are about $0.34. Lyria 002 is listed at $0.06 per 30-second track. These are reference prices, not a quote; taxes, model surface, resolution, region and pricing changes may affect the actual bill. Check current Google model availability, region, quotas and pricing before running. Veo 3.1 has different model IDs and capabilities depending on Gemini API versus Vertex AI; configure the exact supported ID in `VEO_MODEL` and confirm that the authentication method matches your account. See Google's [Veo 3.1 documentation](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/veo/3-1-generate) and [video generation guide](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/video/generate-videos-from-text).
-
-## Important quality limitation
-AI output is not guaranteed to be perfect. Character consistency, physics, lip sync, typography and scene continuity require review and sometimes regeneration. This repository does not auto-publish. Watch the complete video, verify rights, and approve every final export before posting.
-
-See [Quality Standard](docs/QUALITY_STANDARD.md) and [Roadmap](docs/ROADMAP.md).
+## Quality and roadmap
+The free workflow is a working automated editing pipeline, not a claim of perfect photorealistic AI output. Review factual narration, voice pronunciation, captions, safe areas, transitions and final export before publishing. Auto-publishing is not enabled.
