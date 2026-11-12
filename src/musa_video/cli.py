@@ -71,6 +71,10 @@ def narrate(project_dir: Path, text: str = typer.Option(""), voice: str = typer.
         text = " ".join(s["narration"] for s in board["scenes"])
         if "[" in text and "]" in text:
             raise typer.BadParameter("Replace the storyboard narration placeholders before generating speech.")
+    if not voice:
+        import json
+        language = json.loads((project_dir / "brief.json").read_text(encoding="utf-8")).get("language", "en")
+        voice = {"nl": "nl-NL-MaartenNeural", "en": "en-US-GuyNeural"}.get(language, "en-US-GuyNeural")
     target = project_dir / "assets" / "narration.mp3"
     asyncio.run(edge_tts.Communicate(text, voice).save(str(target)))
     print(f"[green]Narration saved:[/green] {target}")
