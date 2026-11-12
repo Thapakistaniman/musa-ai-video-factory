@@ -3,14 +3,27 @@ on:
   workflow_dispatch:
     inputs:
       topic:
-        description: Topic for the short
+        description: Topic for the video
         required: true
         type: string
+      language:
+        description: Narration language (nl or en)
+        required: true
+        default: nl
+        type: choice
+        options: [nl, en]
       scenes:
-        description: Number of scenes (1-5)
+        description: Number of 8-second scenes (1-5)
         required: true
         default: "5"
-        type: string
+        type: choice
+        options: ["1", "2", "3", "4", "5"]
+      platform:
+        description: Final export format
+        required: true
+        default: shorts
+        type: choice
+        options: [tiktok, reels, shorts, youtube]
       write_script:
         description: Generate AI narration script (may incur charges)
         required: true
@@ -31,6 +44,17 @@ on:
         required: true
         default: false
         type: boolean
+      confirm_paid_generation:
+        description: I have reviewed the estimated cost and explicitly approve paid AI generation
+        required: true
+        default: false
+        type: boolean
+      max_budget_usd:
+        description: Maximum estimated generation budget in USD (guardrail, not a provider billing cap)
+        required: true
+        default: "20"
+        type: choice
+        options: ["2", "5", "10", "20", "30", "50"]
 jobs:
   create-project:
     runs-on: ubuntu-latest
@@ -44,8 +68,36 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Install project and optional TTS
         run: pip install -e '.[tts,cloud]'
+      - name: Estimate cost and enforce budget approval
+        env:
+          SCENES: ${{ inputs.scenes }}
+          WRITE_SCRIPT: ${{ inputs.write_script }}
+          GENERATE_IMAGES: ${{ inputs.generate_images }}
+          GENERATE_AI_MUSIC: ${{ inputs.generate_ai_music }}
+          GENERATE_VIDEO: ${{ inputs.generate_video }}
+          MAX_BUDGET: ${{ inputs.max_budget_usd }}
+          CONFIRM_PAID: ${{ inputs.confirm_paid_generation }}
+        run: |
+          python - <<'PY'
+          import os
+          scenes = int(os.environ["SCENES"])
+          # Conservative published-rate planning estimates; verify provider pricing before every run.
+          video = scenes * 8 * 0.40 if os.environ["GENERATE_VIDEO"] == "true" else 0
+          images = scenes * 0.067 if os.environ["GENERATE_IMAGES"] == "true" else 0
+          music = 0.06 if os.environ["GENERATE_AI_MUSIC"] == "true" else 0
+          script = 0.10 if os.environ["WRITE_SCRIPT"] == "true" else 0
+          total = video + images + music + script
+          budget = float(os.environ["MAX_BUDGET"])
+          print(f"Estimated maximum planning cost: ${total:.2f} USD")
+          print(f"Configured guardrail: ${budget:.2f} USD")
+          print("Estimate assumes Veo 3.1 Standard at $0.40/sec and five 8-second scenes maximum.")
+          if total > budget:
+              raise SystemExit("Budget guardrail exceeded. Reduce scenes or increase the selected limit.")
+          if total > 0 and os.environ["CONFIRM_PAID"] != "true":
+              raise SystemExit("Paid generation is enabled but explicit cost approval is missing.")
+          PY
       - name: Create storyboard
-        run: musa-video new --topic "${{ inputs.topic }}" --scenes "${{ inputs.scenes }}"
+        run: musa-video new --topic "${{ inputs.topic }}" --language "${{ inputs.language }}" --scenes "${{ inputs.scenes }}"
       - name: Prepare project path
         id: project
         run: echo "dir=$(find projects -mindepth 1 -maxdepth 1 -type d | head -n 1)" >> "$GITHUB_OUTPUT"
@@ -92,10 +144,10 @@ jobs:
         run: musa-video music "${{ steps.project.outputs.dir }}" --duration "$(( ${{ inputs.scenes }} * 8 ))"
       - name: Assemble final MP4
         if: ${{ inputs.generate_video }}
-        run: musa-video assemble "${{ steps.project.outputs.dir }}"
+        run: musa-video assemble "${{ steps.project.outputs.dir }}" --platform "${{ inputs.platform }}"
       - name: Upload project and outputs
         uses: actions/upload-artifact@v4
         with:
-          name: musa-video-project
+          name: musa-video-${{ inputs.platform }}-${{ github.run_number }}
           path: projects/
           if-no-files-found: error
