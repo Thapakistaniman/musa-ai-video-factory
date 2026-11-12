@@ -13,6 +13,7 @@ dependencies = ["typer>=0.12", "rich>=13.7", "python-dotenv>=1.0", "google-genai
 [project.optional-dependencies]
 tts = ["edge-tts>=6.1"]
 dev = ["pytest>=8.2", "ruff>=0.5"]
+cloud = ["google-auth>=2.30", "requests>=2.32"]
 
 [project.scripts]
 musa-video = "musa_video.cli:app"
