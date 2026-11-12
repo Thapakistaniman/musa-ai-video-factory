@@ -90,7 +90,6 @@ jobs:
       - name: Create original ambient fallback bed
         if: ${{ inputs.generate_video && !inputs.generate_ai_music }}
         run: musa-video music "${{ steps.project.outputs.dir }}" --duration "$(( ${{ inputs.scenes }} * 8 ))"
-        if: ${{ inputs.generate_video }}
       - name: Assemble final MP4
         if: ${{ inputs.generate_video }}
         run: musa-video assemble "${{ steps.project.outputs.dir }}"
