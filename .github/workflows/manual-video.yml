@@ -11,15 +11,25 @@ on:
         required: true
         default: "5"
         type: string
+      write_script:
+        description: Generate AI narration script (may incur charges)
+        required: true
+        default: false
+        type: boolean
+      generate_images:
+        description: Generate one AI storyboard image per scene (may incur charges)
+        required: true
+        default: false
+        type: boolean
       generate_video:
-        description: Submit Veo requests (may incur charges)
+        description: Generate Veo video clips (may incur charges)
         required: true
         default: false
         type: boolean
 jobs:
   create-project:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,24 +37,46 @@ jobs:
           python-version: "3.11"
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Install project
-        run: pip install -e .
+      - name: Install project and optional TTS
+        run: pip install -e '.[tts]'
       - name: Create storyboard
         run: musa-video new --topic "${{ inputs.topic }}" --scenes "${{ inputs.scenes }}"
+      - name: Prepare project path
+        id: project
+        run: echo "dir=$(find projects -mindepth 1 -maxdepth 1 -type d | head -n 1)" >> "$GITHUB_OUTPUT"
+      - name: Write narration script (explicit opt-in)
+        if: ${{ inputs.write_script }}
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          test -n "$GOOGLE_API_KEY" || (echo "Missing GOOGLE_API_KEY secret" && exit 1)
+          musa-video write "${{ steps.project.outputs.dir }}" --generate
+      - name: Generate storyboard stills (explicit opt-in)
+        if: ${{ inputs.generate_images }}
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          test -n "$GOOGLE_API_KEY" || (echo "Missing GOOGLE_API_KEY secret" && exit 1)
+          musa-video images "${{ steps.project.outputs.dir }}" --generate
       - name: Generate Veo clips (explicit opt-in)
         if: ${{ inputs.generate_video }}
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           test -n "$GOOGLE_API_KEY" || (echo "Missing GOOGLE_API_KEY secret" && exit 1)
-          PROJECT_DIR=$(find projects -mindepth 1 -maxdepth 1 -type d | head -n 1)
-          musa-video generate "$PROJECT_DIR" --generate
+          musa-video generate "${{ steps.project.outputs.dir }}" --generate
+      - name: Generate voice-over and captions
+        if: ${{ inputs.write_script }}
+        run: |
+          musa-video narrate "${{ steps.project.outputs.dir }}"
+          musa-video captions "${{ steps.project.outputs.dir }}"
+      - name: Create original ambient music bed
+        if: ${{ inputs.generate_video }}
+        run: musa-video music "${{ steps.project.outputs.dir }}" --duration "$(( ${{ inputs.scenes }} * 8 ))"
       - name: Assemble final MP4
         if: ${{ inputs.generate_video }}
-        run: |
-          PROJECT_DIR=$(find projects -mindepth 1 -maxdepth 1 -type d | head -n 1)
-          musa-video assemble "$PROJECT_DIR"
-      - name: Upload project artifact
+        run: musa-video assemble "${{ steps.project.outputs.dir }}"
+      - name: Upload project and outputs
         uses: actions/upload-artifact@v4
         with:
           name: musa-video-project
