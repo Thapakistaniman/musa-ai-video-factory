@@ -60,7 +60,7 @@ def doctor():
     print(f"Script model: {os.getenv('SCRIPT_MODEL', 'gemini-3.1-flash-lite')}")
 
 @app.command()
-def narrate(project_dir: Path, text: str = typer.Option(""), voice: str = typer.Option("en-US-GuyNeural")):
+def narrate(project_dir: Path, text: str = typer.Option(""), voice: str = typer.Option("", help="Edge TTS voice; auto-selects Dutch or English when blank.")):
     try:
         import asyncio, edge_tts
     except ImportError as exc:
