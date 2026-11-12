@@ -32,6 +32,15 @@ def generate(project_dir: Path, generate: bool = typer.Option(False, "--generate
 def images(project_dir: Path, generate: bool = typer.Option(False, "--generate", help="Explicitly request AI images; usage may be billed.")):
     generate_story_images(project_dir, confirmed=generate)
 
+@app.command("free-render")
+def free_render(project_dir: Path):
+    rendered = render_free(project_dir)
+    print(f"[green]Rendered {len(rendered)} free motion-graphic scenes.[/green]")
+
+@app.command("free-script")
+def free_script(project_dir: Path):
+    print(f"[green]Free narration scaffold saved:[/green] {write_free_narration(project_dir)}")
+
 @app.command()
 def captions(project_dir: Path):
     print(f"[green]Captions saved:[/green] {create_captions(project_dir)}")
