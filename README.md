@@ -48,7 +48,7 @@ musa-video music projects/<slug> --duration 40
 musa-video assemble projects/<slug>
 ```
 
-The original ambient music command creates a simple synthesized pad, not a finished commercial soundtrack. For professional results, add properly licensed music and sound effects to `assets/` and keep the license/source record.
+For higher-quality original music, install `pip install -e '.[cloud]'`, configure Google Cloud Application Default Credentials and `GOOGLE_CLOUD_PROJECT`, then run `musa-video music-ai projects/<slug> --generate`. This uses Vertex AI Lyria 002 to generate an original 30-second instrumental WAV; it is a paid cloud request (Google currently documents $0.06 per 30-second output). The simple `musa-video music` command remains a no-cloud synthetic ambient fallback. Always listen and review the generated track before publishing.
 
 ## iPhone / cloud
 Open repository → Actions → **Musa Video Factory (manual)** → Run workflow. The manual workflow creates the storyboard, optionally generates Veo clips only when the checkbox is enabled, assembles the MP4, and uploads the project as an artifact. Add `GOOGLE_API_KEY` under Settings → Secrets and variables → Actions. Never paste API keys into chat or source code.
