@@ -1,0 +1,47 @@
+name: Musa Video Factory (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: Topic for the short
+        required: true
+        type: string
+      scenes:
+        description: Number of scenes (1-5)
+        required: true
+        default: "5"
+        type: string
+      generate_video:
+        description: Submit Veo requests (may incur charges)
+        required: true
+        default: false
+        type: boolean
+jobs:
+  create-project:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install project
+        run: pip install -e .
+      - name: Create storyboard
+        run: musa-video new --topic "${{ inputs.topic }}" --scenes "${{ inputs.scenes }}"
+      - name: Generate Veo clips (explicit opt-in)
+        if: ${{ inputs.generate_video }}
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          test -n "$GOOGLE_API_KEY" || (echo "Missing GOOGLE_API_KEY secret" && exit 1)
+          PROJECT_DIR=$(find projects -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          musa-video generate "$PROJECT_DIR" --generate
+      - name: Upload project artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: musa-video-project
+          path: projects/
+          if-no-files-found: error
