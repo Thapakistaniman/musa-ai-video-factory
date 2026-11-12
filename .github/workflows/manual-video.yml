@@ -39,6 +39,11 @@ jobs:
           test -n "$GOOGLE_API_KEY" || (echo "Missing GOOGLE_API_KEY secret" && exit 1)
           PROJECT_DIR=$(find projects -mindepth 1 -maxdepth 1 -type d | head -n 1)
           musa-video generate "$PROJECT_DIR" --generate
+      - name: Assemble final MP4
+        if: ${{ inputs.generate_video }}
+        run: |
+          PROJECT_DIR=$(find projects -mindepth 1 -maxdepth 1 -type d | head -n 1)
+          musa-video assemble "$PROJECT_DIR"
       - name: Upload project artifact
         uses: actions/upload-artifact@v4
         with:
