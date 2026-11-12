@@ -21,6 +21,11 @@ on:
         required: true
         default: false
         type: boolean
+      generate_ai_music:
+        description: Generate an original Lyria AI soundtrack (Google Cloud billing applies)
+        required: true
+        default: false
+        type: boolean
       generate_video:
         description: Generate Veo video clips (may incur charges)
         required: true
@@ -38,7 +43,7 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Install project and optional TTS
-        run: pip install -e '.[tts]'
+        run: pip install -e '.[tts,cloud]'
       - name: Create storyboard
         run: musa-video new --topic "${{ inputs.topic }}" --scenes "${{ inputs.scenes }}"
       - name: Prepare project path
@@ -70,9 +75,22 @@ jobs:
         run: |
           musa-video narrate "${{ steps.project.outputs.dir }}"
           musa-video captions "${{ steps.project.outputs.dir }}"
-      - name: Create original ambient music bed
-        if: ${{ inputs.generate_video }}
+      - name: Authenticate Google Cloud for Lyria music
+        if: ${{ inputs.generate_ai_music }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+      - name: Generate original Lyria soundtrack (explicit opt-in)
+        if: ${{ inputs.generate_ai_music }}
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_LOCATION: us-central1
+        run: musa-video music-ai "${{ steps.project.outputs.dir }}" --generate
+      - name: Create original ambient fallback bed
+        if: ${{ inputs.generate_video && !inputs.generate_ai_music }}
         run: musa-video music "${{ steps.project.outputs.dir }}" --duration "$(( ${{ inputs.scenes }} * 8 ))"
+        if: ${{ inputs.generate_video }}
       - name: Assemble final MP4
         if: ${{ inputs.generate_video }}
         run: musa-video assemble "${{ steps.project.outputs.dir }}"
