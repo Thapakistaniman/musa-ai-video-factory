@@ -9,7 +9,7 @@ from .images import generate_story_images
 from .captions import create_captions
 from .audio import make_original_ambient_bed
 from .music_ai import generate_lyria_track
-from .assemble import assemble
+from .assemble import assemble\nfrom .free import render_free, write_free_narration
 
 load_dotenv()
 app = typer.Typer(no_args_is_help=True, help="Create vertical AI explainer videos.")
