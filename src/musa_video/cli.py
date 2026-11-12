@@ -48,8 +48,8 @@ def music_ai(project_dir: Path, prompt: str = typer.Option("Cinematic, modern in
     generate_lyria_track(target, prompt, confirmed=generate)
 
 @app.command("assemble")
-def assemble_command(project_dir: Path):
-    print(f"[green]Rendered:[/green] {assemble(Path(project_dir))}")
+def assemble_command(project_dir: Path, platform: str = typer.Option("shorts", help="tiktok, reels, shorts or youtube")):
+    print(f"[green]Rendered:[/green] {assemble(Path(project_dir), platform=platform)}")
 
 @app.command()
 def doctor():
