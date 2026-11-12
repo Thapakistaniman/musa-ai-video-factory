@@ -11,7 +11,7 @@ def make_original_ambient_bed(output: Path, duration: int = 40) -> Path:
     tones = [110.00, 164.81, 220.00, 261.63]
     sources = [f"sine=f={hz}:d={duration}:sample_rate=44100,volume=0.025" for hz in tones]
     graph = ";".join(f"[{i}:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[a{i}]" for i in range(len(tones)))
-    graph += ";" + "".join(f"[a{i}]" for i in range(len(tones))) + f"amix=inputs={len(tones)}:normalize=0,afade=t=in:st=0:d=2,afade=t=out:st={max(0,duration-3)}:d=3,alimiter=limit=0.8[out]"
+    graph += ";" + "".join(f"volume=0.025[a{i}]" for i in range(len(tones))) + f"amix=inputs={len(tones)}:normalize=0,afade=t=in:st=0:d=2,afade=t=out:st={max(0,duration-3)}:d=3,alimiter=limit=0.8[out]"
     cmd = [ffmpeg, "-y"]
     for hz in tones:
         cmd += ["-f", "lavfi", "-i", f"sine=frequency={hz}:duration={duration}:sample_rate=44100"]
