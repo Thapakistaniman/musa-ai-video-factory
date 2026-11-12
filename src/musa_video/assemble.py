@@ -36,7 +36,7 @@ def assemble(project_dir: Path) -> Path:
         _run([ffmpeg, "-y", "-i", str(video_input), "-vf", vf, "-map", "0:v:0", "-map", "0:a?", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-c:a", "aac", "-b:a", "192k", str(subtitled)])
         video_input = subtitled
     narration = project_dir / "assets" / "narration.mp3"
-    music = project_dir / "assets" / "music_bed.mp3"
+    music_wav = project_dir / "assets" / "music_bed.wav"\n    music = music_wav if music_wav.exists() else project_dir / "assets" / "music_bed.mp3"
     has_source_audio = _has_audio(ffprobe, video_input)
     inputs = [video_input]
     if narration.exists():
